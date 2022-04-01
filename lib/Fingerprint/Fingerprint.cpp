@@ -120,7 +120,6 @@ bool Finger::evaluate_status(int16_t status)
     switch (status)
     {
     case FPM_OK:
-        Serial.println("Image taken");
         return true;
     case FPM_IMAGEMESS:
         Serial.println("Image too messy");

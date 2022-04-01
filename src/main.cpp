@@ -35,11 +35,15 @@ void loop()
   if (finger.get_free_id(fid))
   {
     for (int i = 0; i < 10; ++i)
+    {
       if (finger.enroll_finger(fid))
+      {
         break;
-    delay(200);
-    Serial.println("Enroll failed - please try again");
-    delay(500);
+      }
+      delay(200);
+      Serial.println("Enroll failed - please try again");
+      delay(500);
+    }
   }
   else
   {
