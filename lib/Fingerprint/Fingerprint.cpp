@@ -39,7 +39,7 @@ bool Finger::read_image()
         {
             return true;
         }
-        yield();
+        // yield();
     }
     Serial.println("Failed to get image");
     return false;
@@ -102,7 +102,7 @@ bool Finger::get_free_id(int16_t &result)
         }
 
         // nothing found on this page, move on to next
-        yield();
+        // yield();
     }
 
     Serial.println("No free slots!");
