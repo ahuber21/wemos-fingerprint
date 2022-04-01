@@ -38,6 +38,8 @@ void loop()
       if (finger.enroll_finger(fid))
         break;
     delay(200);
+    Serial.println("Enroll failed - please try again");
+    delay(500);
   }
   else
   {

@@ -61,35 +61,20 @@ bool Finger::enroll_finger(int16_t fid)
     delay(1000);
 
     // give the user 5 attempts to place the finger correctly
-    for (int i = 0; i < 5; ++i)
-    {
-        read_image();
-        status = m_fpm.image2Tz(2);
-        if (evaluate_status(status))
-        {
-            break;
-        }
-        if (i == 4)
-            return false;
-        else
-            Serial.println("Comparing fingers did not work - try again");
-    }
+    read_image();
+    status = m_fpm.image2Tz(2);
+    if (!evaluate_status(status))
+        return false;
 
     status = m_fpm.createModel();
     if (!evaluate_status(status))
-    {
-        Serial.println("Failed to createModel()");
         return false;
-    }
 
     Serial.print("ID ");
     Serial.println(fid);
     status = m_fpm.storeModel(fid);
     if (!evaluate_status(status))
-    {
-        Serial.println("Failed to storeModel");
         return false;
-    }
 
     Serial.println("Enroll finished successfully");
     return true;
