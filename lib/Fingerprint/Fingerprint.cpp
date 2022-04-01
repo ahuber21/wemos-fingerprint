@@ -9,12 +9,13 @@ Finger::Finger(const uint8_t TX, const uint8_t RX, uint32_t baud)
 
 bool Finger::begin()
 {
+    bool status = true;
     // start the software serial
     m_serial.begin(m_baud);
     // start the finger sensor
-    m_fpm.begin();
+    status &= m_fpm.begin();
     // read the parameters
-    m_fpm.readParams(&m_params);
+    status &= evaluate_status(m_fpm.readParams(&m_params));
 
     return true;
 }
@@ -27,16 +28,16 @@ void Finger::print_params()
     Serial.println(FPM::packet_lengths[m_params.packet_len]);
 }
 
-bool Finger::get_image()
+bool Finger::read_image()
 {
     uint16_t status;
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 100; ++i)
     {
         status = m_fpm.getImage();
         bool success = evaluate_status(status);
         if (success)
         {
-            return success;
+            return true;
         }
         yield();
     }
@@ -44,38 +45,54 @@ bool Finger::get_image()
     return false;
 }
 
-int16_t Finger::enroll_finger(int16_t fid)
+bool Finger::enroll_finger(int16_t fid)
 {
     Serial.println("Waiting for valid finger to enroll");
-    get_image();
+    read_image();
 
     int16_t status = m_fpm.image2Tz(1);
     if (!evaluate_status(status))
-        return status;
+        return false;
 
     Serial.println("Remove finger");
-    delay(500);
-    get_image();
+    delay(1000);
 
     Serial.println("Place same finger again");
-    get_image();
+    delay(1000);
 
-    status = m_fpm.image2Tz(2);
-    if (!evaluate_status(status))
-        return status;
+    // give the user 5 attempts to place the finger correctly
+    for (int i = 0; i < 5; ++i)
+    {
+        read_image();
+        status = m_fpm.image2Tz(2);
+        if (evaluate_status(status))
+        {
+            break;
+        }
+        if (i == 4)
+            return false;
+        else
+            Serial.println("Comparing fingers did not work - try again");
+    }
 
     status = m_fpm.createModel();
     if (!evaluate_status(status))
-        return status;
+    {
+        Serial.println("Failed to createModel()");
+        return false;
+    }
 
     Serial.print("ID ");
     Serial.println(fid);
     status = m_fpm.storeModel(fid);
     if (!evaluate_status(status))
-        return status;
+    {
+        Serial.println("Failed to storeModel");
+        return false;
+    }
 
     Serial.println("Enroll finished successfully");
-    return status;
+    return true;
 }
 
 bool Finger::get_free_id(int16_t &result)
@@ -133,7 +150,7 @@ bool Finger::evaluate_status(int16_t status)
         Serial.println("Got wrong PID or length!");
         break;
     case FPM_NOFINGER:
-        Serial.println(".");
+        Serial.print(".");
         break;
     case FPM_PACKETRECIEVEERR:
         Serial.println("Communication error");

@@ -12,7 +12,7 @@ public:
     bool begin();
 
     // enroll a new finger at the specified fid
-    int16_t enroll_finger(int16_t fid);
+    bool enroll_finger(int16_t fid);
 
     // clear the database
     bool clear_database();
@@ -28,7 +28,7 @@ public:
     void print_params();
 
 protected:
-    bool get_image();
+    bool read_image();
     bool evaluate_status(int16_t status);
 
 private:
