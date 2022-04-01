@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <ArduinoOTA.h>
 #include <ESP8266WiFi.h>
-#include <Fingerprint.h>
+#include <Finger.h>
+#include <MQTTFinger.h>
 #include <PubSubClient.h>
 
 #define MOSQUITTO_PORT 1883
@@ -17,6 +18,7 @@ const char *mqtt_in_topic = "fingerprint_in";
 Finger finger(D2, D3, 57600);
 WiFiClient espClient;
 PubSubClient mqtt_client(espClient);
+MQTTFinger mqtt_finger(&finger, &mqtt_client);
 
 // setup helpers
 void setup_serial();
@@ -28,9 +30,6 @@ void setup_mqtt();
 // mqtt helpers
 void mqtt_callback(char *topic, byte *payload, uint16_t length);
 void mqtt_reconnect();
-
-// logic
-void handle_mqtt_opcode(char *code);
 
 void setup()
 {
@@ -44,41 +43,12 @@ void setup()
 void loop()
 {
   ArduinoOTA.handle();
+
   if (!mqtt_client.connected())
-  {
     mqtt_reconnect();
-  }
   mqtt_client.loop();
 
-  if (Serial.available() > 0)
-  {
-
-    Serial.println("Searching for a free slot to store the template...");
-    int16_t fid;
-
-    if (finger.get_free_id(fid))
-    {
-      for (int i = 0; i < 10; ++i)
-      {
-        if (finger.enroll_finger(fid))
-        {
-          break;
-        }
-        delay(200);
-        Serial.println("Enroll failed - please try again");
-        delay(500);
-      }
-    }
-    else
-    {
-      Serial.println("No free slot in flash library!");
-    }
-
-    while (Serial.read() != -1)
-    {
-      // clear buffer
-    }
-  }
+  mqtt_finger.handle_opcode();
 }
 
 void setup_serial()
@@ -135,19 +105,19 @@ void setup_mqtt()
 
 void mqtt_callback(char *topic, byte *payload, uint16_t length)
 {
-  char converted[length];
+  char opcode[length + 1];
   for (uint16_t i = 0; i < length; ++i)
   {
-    converted[i] = payload[i];
+    opcode[i] = payload[i];
   }
-  converted[length] = '\0';
+  opcode[length] = '\0';
 
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
-  Serial.println(converted);
+  Serial.println(opcode);
 
-  handle_mqtt_opcode(converted);
+  mqtt_finger.set_opcode(opcode);
 }
 
 void mqtt_reconnect()
@@ -175,22 +145,5 @@ void mqtt_reconnect()
       // Wait 5 seconds before retrying
       delay(1000);
     }
-  }
-}
-
-void handle_mqtt_opcode(char *code)
-{
-  if (strcmp(code, "READ") == 0)
-  {
-    Serial.println("reading a fingerprint");
-  }
-  else if (strcmp(code, "ENROL") == 0)
-  {
-    Serial.println("enrolling a fingerprint");
-  }
-  else
-  {
-    Serial.print("unknown code: ");
-    Serial.println(code);
   }
 }
