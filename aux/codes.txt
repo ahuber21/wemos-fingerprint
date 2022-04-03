@@ -1,0 +1,32 @@
+// confirmation codes
+#define FPM_OK                      0x00
+#define FPM_HANDSHAKE_OK            0x55
+#define FPM_PACKETRECIEVEERR        0x01
+#define FPM_NOFINGER                0x02
+#define FPM_IMAGEFAIL               0x03
+#define FPM_IMAGEMESS               0x06
+#define FPM_FEATUREFAIL             0x07
+#define FPM_NOMATCH                 0x08
+#define FPM_NOTFOUND                0x09
+#define FPM_ENROLLMISMATCH          0x0A
+#define FPM_BADLOCATION             0x0B
+#define FPM_DBREADFAIL              0x0C
+#define FPM_UPLOADFEATUREFAIL       0x0D
+#define FPM_PACKETRESPONSEFAIL      0x0E
+#define FPM_UPLOADFAIL              0x0F
+#define FPM_DELETEFAIL              0x10
+#define FPM_DBCLEARFAIL             0x11
+#define FPM_PASSFAIL                0x13
+#define FPM_INVALIDIMAGE            0x15
+#define FPM_FLASHERR                0x18
+#define FPM_INVALIDREG              0x1A
+#define FPM_ADDRCODE                0x20
+#define FPM_PASSVERIFY              0x21
+
+
+/* returned whenever we time out while reading */
+#define FPM_TIMEOUT                 -1
+/* returned whenever we get an unexpected PID or length */
+#define FPM_READ_ERROR              -2
+/* returned whenever there's no free ID */
+#define FPM_NOFREEINDEX             -1

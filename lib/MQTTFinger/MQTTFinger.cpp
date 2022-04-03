@@ -25,6 +25,13 @@ void MQTTFinger::publish(const char *msg)
     m_mqtt->publish("fingerprint_out", msg);
 }
 
+void MQTTFinger::publish(uint16_t status)
+{
+    if (!m_finger)
+        return;
+    publish(m_finger->status_to_string(status));
+}
+
 void MQTTFinger::enroll_finger()
 {
     bool success;
@@ -41,7 +48,7 @@ void MQTTFinger::enroll_finger()
     publish("place finger");
     delay(1000);
     success = m_finger->read_template(status);
-    publish(m_finger->status_to_string(status));
+    publish(status);
     if (!success)
         return;
 
@@ -50,13 +57,13 @@ void MQTTFinger::enroll_finger()
     publish("place same finger again");
     delay(1000);
     success = m_finger->verify_template(status);
-    publish(m_finger->status_to_string(status));
+    publish(status);
     if (!success)
         return;
 
     publish("validating templte");
     success = m_finger->store_model(fid, status);
-    publish(m_finger->status_to_string(status));
+    publish(status);
     if (!success)
         return;
 
@@ -73,7 +80,7 @@ void MQTTFinger::handle_opcode()
 
     if (strcmp(m_opcode, "READ") == 0)
     {
-        publish("reading a fingerprint");
+        read_fingerprint();
     }
     else if (strcmp(m_opcode, "ENROLL") == 0)
     {
@@ -90,4 +97,17 @@ void MQTTFinger::handle_opcode()
 void MQTTFinger::loop()
 {
     handle_opcode();
+}
+
+void MQTTFinger::read_fingerprint()
+{
+    int16_t status;
+    uint16_t fid, score;
+    bool success = m_finger->read_fingerprint(status, fid, score);
+    publish(status);
+    if (!success)
+        return;
+
+    publish("ID = " + std::to_string(fid) + " | score = " + std::to_string(score));
+    return;
 }

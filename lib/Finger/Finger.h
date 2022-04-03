@@ -46,6 +46,9 @@ public:
     // convert the status to a string
     std::string status_to_string(const int16_t &status);
 
+    // read a fingerprint and store the ID and score in the result
+    bool read_fingerprint(int16_t &status, uint16_t &fid, uint16_t &score);
+
 private:
     SoftwareSerial m_serial;
     FPM m_fpm;

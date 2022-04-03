@@ -203,33 +203,73 @@ std::string Finger::status_to_string(const int16_t &status)
     {
     case FPM_OK:
         return "FPM_OK";
+    case FPM_HANDSHAKE_OK:
+        return "FPM_HANDSHAKE_OK";
+    case FPM_PACKETRECIEVEERR:
+        return "FPM_PACKETRECIEVEERR";
+    case FPM_NOFINGER:
+        return "FPM_NOFINGER";
+    case FPM_IMAGEFAIL:
+        return "FPM_IMAGEFAIL";
     case FPM_IMAGEMESS:
         return "FPM_IMAGEMESS";
     case FPM_FEATUREFAIL:
         return "FPM_FEATUREFAIL";
-    case FPM_INVALIDIMAGE:
-        return "FPM_INVALIDIMAGE";
-    case FPM_READ_ERROR:
-        return "FPM_READ_ERROR";
-    case FPM_NOFINGER:
-        return "FPM_NOFINGER";
-    case FPM_PACKETRECIEVEERR:
-        return "FPM_PACKETRECIEVEERR";
-    case FPM_IMAGEFAIL:
-        return "FPM_IMAGEFAIL";
-    case FPM_TIMEOUT:
-        return "FPM_TIMEOUT";
+    case FPM_NOMATCH:
+        return "FPM_NOMATCH";
+    case FPM_NOTFOUND:
+        return "FPM_NOTFOUND";
     case FPM_ENROLLMISMATCH:
         return "FPM_ENROLLMISMATCH";
     case FPM_BADLOCATION:
         return "FPM_BADLOCATION";
-    case FPM_FLASHERR:
-        return "FPM_FLASHERR";
+    case FPM_DBREADFAIL:
+        return "FPM_DBREADFAIL";
+    case FPM_UPLOADFEATUREFAIL:
+        return "FPM_UPLOADFEATUREFAIL";
+    case FPM_PACKETRESPONSEFAIL:
+        return "FPM_PACKETRESPONSEFAIL";
+    case FPM_UPLOADFAIL:
+        return "FPM_UPLOADFAIL";
+    case FPM_DELETEFAIL:
+        return "FPM_DELETEFAIL";
     case FPM_DBCLEARFAIL:
         return "FPM_DBCLEARFAIL";
+    case FPM_PASSFAIL:
+        return "FPM_PASSFAIL";
+    case FPM_INVALIDIMAGE:
+        return "FPM_INVALIDIMAGE";
+    case FPM_FLASHERR:
+        return "FPM_FLASHERR";
+    case FPM_INVALIDREG:
+        return "FPM_INVALIDREG";
+    case FPM_ADDRCODE:
+        return "FPM_ADDRCODE";
+    case FPM_PASSVERIFY:
+        return "FPM_PASSVERIFY";
+    case FPM_TIMEOUT:
+        return "FPM_TIMEOUT or FPM_NOFREEINDEX";
+    case FPM_READ_ERROR:
+        return "FPM_READ_ERROR";
     default:
         char buf[25];
         sprintf(buf, "UNKNOWN STATUS %d", status);
         return buf;
     }
+}
+
+bool Finger::read_fingerprint(int16_t &status, uint16_t &fid, uint16_t &score)
+{
+    status = FPM_NOFINGER;
+
+    if (!read_image(10))
+        return false;
+
+    status = m_fpm.image2Tz();
+    if (status != FPM_OK)
+        return false;
+
+    status = m_fpm.searchDatabase(&fid, &score);
+
+    return status == FPM_OK;
 }

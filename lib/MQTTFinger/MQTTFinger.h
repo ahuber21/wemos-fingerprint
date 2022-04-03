@@ -22,10 +22,14 @@ public:
 protected:
     // publish a message using the PubSubClient
     void publish(std::string msg) { publish(msg.c_str()); }
+    void publish(uint16_t status);
     void publish(const char *msg);
 
     // enroll a new finger
     void enroll_finger();
+
+    // read a fingerprint
+    void read_fingerprint();
 
 private:
     void _mqtt_callback(char *topic, uint8_t *payload, unsigned int length);
