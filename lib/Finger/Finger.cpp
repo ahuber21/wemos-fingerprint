@@ -17,7 +17,7 @@ bool Finger::begin()
     // read the parameters
     status &= evaluate_status(m_fpm.readParams(&m_params));
 
-    return true;
+    return status;
 }
 
 void Finger::print_params()
