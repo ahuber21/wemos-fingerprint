@@ -1,6 +1,7 @@
 #include "MQTTFinger.h"
 #include "Finger.h"
 #include "PubSubClient.h"
+#include "StatusLEDs.h"
 #include <string>
 
 MQTTFinger::MQTTFinger(Finger *finger, PubSubClient *mqtt)
@@ -32,7 +33,7 @@ void MQTTFinger::publish(uint16_t status)
     publish(m_finger->status_to_string(status));
 }
 
-void MQTTFinger::enroll_finger()
+bool MQTTFinger::enroll_finger()
 {
     bool success;
     int16_t status, fid;
@@ -42,7 +43,7 @@ void MQTTFinger::enroll_finger()
     if (!success)
     {
         publish("no space left on device");
-        return;
+        return false;
     }
 
     publish("place finger");
@@ -50,24 +51,28 @@ void MQTTFinger::enroll_finger()
     success = m_finger->read_template(status);
     publish(status);
     if (!success)
-        return;
+        return false;
 
     publish("remove finger");
+    digitalWrite(LED_BLUE, LOW);
+    blink_led(LED_BLUE, 3, 100);
     delay(1000);
     publish("place same finger again");
+    digitalWrite(LED_BLUE, HIGH);
     delay(1000);
     success = m_finger->verify_template(status);
     publish(status);
     if (!success)
-        return;
+        return false;
 
     publish("validating templte");
     success = m_finger->store_model(fid, status);
     publish(status);
     if (!success)
-        return;
+        return false;
 
     publish("Enrolled new finger at ID = " + std::to_string(fid));
+    return true;
 }
 
 void MQTTFinger::handle_opcode()
@@ -78,13 +83,17 @@ void MQTTFinger::handle_opcode()
     if (!m_codeAvailable)
         return;
 
+    digitalWrite(LED_BLUE, HIGH);
+
+    bool success = false;
+
     if (strcmp(m_opcode, "READ") == 0)
     {
-        read_fingerprint();
+        success = read_fingerprint();
     }
     else if (strcmp(m_opcode, "ENROLL") == 0)
     {
-        enroll_finger();
+        success = enroll_finger();
     }
     else
     {
@@ -92,6 +101,9 @@ void MQTTFinger::handle_opcode()
     }
 
     m_codeAvailable = false;
+
+    digitalWrite(LED_BLUE, LOW);
+    blink_led(success ? LED_GREEN : LED_RED, 3, 100);
 }
 
 void MQTTFinger::loop()
@@ -99,15 +111,15 @@ void MQTTFinger::loop()
     handle_opcode();
 }
 
-void MQTTFinger::read_fingerprint()
+bool MQTTFinger::read_fingerprint()
 {
     int16_t status;
     uint16_t fid, score;
     bool success = m_finger->read_fingerprint(status, fid, score);
     publish(status);
     if (!success)
-        return;
+        return false;
 
     publish("ID = " + std::to_string(fid) + " | score = " + std::to_string(score));
-    return;
+    return true;
 }

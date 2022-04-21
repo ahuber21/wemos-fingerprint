@@ -4,15 +4,11 @@
 #include <Finger.h>
 #include <MQTTFinger.h>
 #include <PubSubClient.h>
+#include <StatusLEDs.h>
 #include <Ticker.h>
 
 // interrupt pin for finger detected
 #define FINGER_INTERRUPT D5
-
-// status leds
-#define LED_GREEN D6 // on when ready for a command
-#define LED_BLUE D7  // on when handling a command
-#define LED_RED D8   // on during normal operation, blinking during power-up
 
 #define MOSQUITTO_PORT 1883
 
@@ -44,7 +40,6 @@ void blink_red_led();
 void signal_setup_complete();
 
 // setup helpers
-void setup_leds();
 void setup_serial();
 void setup_wifi();
 void setup_ota();
@@ -54,6 +49,9 @@ void setup_mqtt();
 // mqtt helpers
 void mqtt_callback(char *topic, byte *payload, uint16_t length);
 void mqtt_connect();
+
+// fingerprint interrupt
+IRAM_ATTR void handle_finger_detected();
 
 void setup()
 {
@@ -87,19 +85,6 @@ void loop()
   mqtt_client.loop();
 
   mqtt_finger.handle_opcode();
-  digitalWrite(LED_BLUE, LOW);
-  digitalWrite(LED_GREEN, HIGH);
-}
-
-void setup_leds()
-{
-  pinMode(LED_GREEN, OUTPUT);
-  pinMode(LED_BLUE, OUTPUT);
-  pinMode(LED_RED, OUTPUT);
-
-  digitalWrite(LED_GREEN, LOW);
-  digitalWrite(LED_BLUE, LOW);
-  digitalWrite(LED_RED, LOW);
 }
 
 void setup_serial()
@@ -142,6 +127,11 @@ bool setup_finger()
   }
   Serial.println("Found fingerprint sensor!");
   finger.print_params();
+
+  // setup the finger detected interrupt
+  pinMode(FINGER_INTERRUPT, INPUT);
+  attachInterrupt(FINGER_INTERRUPT, handle_finger_detected, RISING);
+
   return true;
 }
 
@@ -166,8 +156,6 @@ void mqtt_callback(char *topic, byte *payload, uint16_t length)
   Serial.print("] ");
   Serial.println(opcode);
 
-  digitalWrite(LED_BLUE, HIGH);
-  digitalWrite(LED_GREEN, LOW);
   mqtt_finger.set_opcode(opcode);
 }
 
@@ -221,13 +209,10 @@ void signal_setup_complete()
   digitalWrite(LED_RED, HIGH);
 
   // blink the green LED to signal we're done
-  for (int i = 0; i < 5; ++i)
-  {
-    digitalWrite(LED_GREEN, HIGH);
-    delay(500);
-    digitalWrite(LED_GREEN, LOW);
-    delay(250);
-  }
+  blink_led(LED_GREEN);
+}
 
-  digitalWrite(LED_GREEN, HIGH);
+void handle_finger_detected()
+{
+  mqtt_finger.set_opcode("READ");
 }

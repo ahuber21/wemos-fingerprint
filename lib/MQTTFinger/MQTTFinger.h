@@ -26,10 +26,10 @@ protected:
     void publish(const char *msg);
 
     // enroll a new finger
-    void enroll_finger();
+    bool enroll_finger();
 
     // read a fingerprint
-    void read_fingerprint();
+    bool read_fingerprint();
 
 private:
     void _mqtt_callback(char *topic, uint8_t *payload, unsigned int length);
