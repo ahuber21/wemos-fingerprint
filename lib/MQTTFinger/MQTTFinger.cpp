@@ -184,9 +184,11 @@ bool MQTTFinger::read_fingerprint()
     int16_t status;
     uint16_t fid, score;
     bool success = m_finger->read_fingerprint(status, fid, score);
-    publish(status);
     if (!success)
+    {
+        publish(status);
         return false;
+    }
 
     publish("ID = " + std::to_string(fid) + " | score = " + std::to_string(score));
     return true;
