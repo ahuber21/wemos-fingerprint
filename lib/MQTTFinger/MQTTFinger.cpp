@@ -15,8 +15,23 @@ MQTTFinger::MQTTFinger(Finger *finger, PubSubClient *mqtt)
 bool MQTTFinger::clear()
 {
     int16_t status;
+
     bool success = m_finger->clear_database(status);
     publish(status);
+    return success;
+}
+
+bool MQTTFinger::count()
+{
+    uint16_t count;
+    int16_t status;
+
+    bool success = m_finger->get_template_count(count, status);
+    if (success)
+        publish("Number of templates on device = " + std::to_string(count));
+    else
+        publish(status);
+
     return success;
 }
 
@@ -93,6 +108,10 @@ void MQTTFinger::handle_opcode()
     {
         // clear the fingerprint database
         success = clear();
+    }
+    else if (strcmp(m_opcode, "COUNT") == 0)
+    {
+        success =
     }
     else
     {

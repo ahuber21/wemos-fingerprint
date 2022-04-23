@@ -140,6 +140,12 @@ bool Finger::get_free_id(int16_t &result)
     return false;
 }
 
+bool Finger::get_template_count(uint16_t &count, int16_t &status)
+{
+    status = m_fpm.getTemplateCount(&count);
+    return evaluate_status(status);
+}
+
 void Finger::print_params()
 {
     Serial.print("Capacity: ");

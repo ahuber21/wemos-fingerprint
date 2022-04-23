@@ -20,19 +20,22 @@ public:
     void loop();
 
 protected:
+    // clear the fingerprint database
+    bool clear();
+
+    // count the number of templates in the database
+    bool count();
+
+    // enroll a new finger
+    bool enroll_finger();
+
     // publish a message using the PubSubClient
     void publish(std::string msg) { publish(msg.c_str()); }
     void publish(uint16_t status);
     void publish(const char *msg);
 
-    // enroll a new finger
-    bool enroll_finger();
-
     // read a fingerprint
     bool read_fingerprint();
-
-    // clear the fingerprint database
-    bool clear();
 
 private:
     void _mqtt_callback(char *topic, uint8_t *payload, unsigned int length);

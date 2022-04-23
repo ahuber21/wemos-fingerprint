@@ -25,6 +25,9 @@ public:
     // returns true on success and updates the result argument
     bool get_free_id(int16_t &result);
 
+    // count the number of templates in the database
+    bool get_template_count(uint16_t &count, int16_t &status);
+
     // get the parameters of the fingerprint sensor
     FPM_System_Params get_params() { return m_params; }
 
