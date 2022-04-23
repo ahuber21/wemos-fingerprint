@@ -38,7 +38,7 @@ public:
     bool read_fingerprint(int16_t &status, uint16_t &fid, uint16_t &score);
 
     // read an image from the sensor
-    bool read_image(uint8_t cycles = 255);
+    bool read_image(uint8_t cycles, int16_t &status);
 
     // read an image and save it as template for verification
     bool read_template(int16_t &status);

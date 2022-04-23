@@ -28,10 +28,12 @@ bool Finger::clear_database()
 
 bool Finger::enroll_finger(int16_t fid)
 {
-    Serial.println("Waiting for valid finger to enroll");
-    read_image();
+    int16_t status;
 
-    int16_t status = m_fpm.image2Tz(1);
+    Serial.println("Waiting for valid finger to enroll");
+    read_image(255U, status);
+
+    status = m_fpm.image2Tz(1);
     if (!evaluate_status(status))
         return false;
 
@@ -42,7 +44,7 @@ bool Finger::enroll_finger(int16_t fid)
     delay(1000);
 
     // give the user 5 attempts to place the finger correctly
-    read_image();
+    read_image(255U, status);
     status = m_fpm.image2Tz(2);
     if (!evaluate_status(status))
         return false;
@@ -158,7 +160,7 @@ bool Finger::read_fingerprint(int16_t &status, uint16_t &fid, uint16_t &score)
 {
     status = FPM_NOFINGER;
 
-    if (!read_image(10))
+    if (!read_image(10U, status))
         return false;
 
     status = m_fpm.image2Tz();
@@ -170,9 +172,8 @@ bool Finger::read_fingerprint(int16_t &status, uint16_t &fid, uint16_t &score)
     return status == FPM_OK;
 }
 
-bool Finger::read_image(uint8_t cycles)
+bool Finger::read_image(uint8_t cycles, int16_t &status)
 {
-    uint16_t status;
     for (uint8_t i = 0; i < cycles; ++i)
     {
         status = m_fpm.getImage();
@@ -180,7 +181,6 @@ bool Finger::read_image(uint8_t cycles)
         {
             return true;
         }
-        // yield();
     }
     Serial.println("Failed to get image");
     return false;
@@ -188,7 +188,7 @@ bool Finger::read_image(uint8_t cycles)
 
 bool Finger::read_template(int16_t &status)
 {
-    if (!read_image())
+    if (!read_image(255U, status))
     {
         return false;
     }
@@ -272,7 +272,7 @@ bool Finger::store_model(int16_t fid, int16_t &status)
 
 bool Finger::verify_template(int16_t &status)
 {
-    if (!read_image())
+    if (!read_image(255U, status))
     {
         return false;
     }

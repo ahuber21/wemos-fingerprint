@@ -20,9 +20,6 @@ public:
     void loop();
 
 protected:
-    // clear the fingerprint database
-    bool clear();
-
     // count the number of templates in the database
     bool count();
 

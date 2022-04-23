@@ -8,18 +8,7 @@ MQTTFinger::MQTTFinger(Finger *finger, PubSubClient *mqtt)
     : m_finger(finger),
       m_mqtt(mqtt),
       m_opcode(""),
-      m_codeAvailable(false)
-{
-}
-
-bool MQTTFinger::clear()
-{
-    int16_t status;
-
-    bool success = m_finger->clear_database(status);
-    publish(status);
-    return success;
-}
+      m_codeAvailable(false) {}
 
 bool MQTTFinger::count()
 {
@@ -48,12 +37,14 @@ bool MQTTFinger::enroll_finger()
         return false;
     }
 
-    publish("place finger");
+    publish("place finger to start enrolling at ID = " + std::to_string(fid));
     delay(1000);
     success = m_finger->read_template(status);
-    publish(status);
     if (!success)
+    {
+        publish(status);
         return false;
+    }
 
     publish("remove finger");
     digitalWrite(LED_BLUE, LOW);
@@ -61,18 +52,21 @@ bool MQTTFinger::enroll_finger()
     delay(1000);
     publish("place same finger again");
     digitalWrite(LED_BLUE, HIGH);
-    delay(1000);
+    delay(200);
     success = m_finger->verify_template(status);
-    publish(status);
     if (!success)
+    {
+        publish(status);
         return false;
+    }
 
-    publish("validating templte");
+    publish("validating template");
     success = m_finger->store_model(fid, status);
-    publish(status);
     if (!success)
+    {
+        publish(status);
         return false;
-
+    }
     publish("Enrolled new finger at ID = " + std::to_string(fid));
     return true;
 }
@@ -107,11 +101,11 @@ void MQTTFinger::handle_opcode()
     else if (strcmp(m_opcode, "CLEAR") == 0)
     {
         // clear the fingerprint database
-        success = clear();
+        success = m_finger->clear_database();
     }
     else if (strcmp(m_opcode, "COUNT") == 0)
     {
-        success =
+        success = count();
     }
     else
     {
