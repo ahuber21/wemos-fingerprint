@@ -12,25 +12,12 @@ MQTTFinger::MQTTFinger(Finger *finger, PubSubClient *mqtt)
 {
 }
 
-void MQTTFinger::set_opcode(const char *code)
+bool MQTTFinger::clear()
 {
-    strncpy(m_opcode, code, OPCODE_MAX_LENGTH);
-    m_codeAvailable = true;
-}
-
-void MQTTFinger::publish(const char *msg)
-{
-    if (!m_mqtt)
-        return;
-
-    m_mqtt->publish("fingerprint_out", msg);
-}
-
-void MQTTFinger::publish(uint16_t status)
-{
-    if (!m_finger)
-        return;
-    publish(m_finger->status_to_string(status));
+    int16_t status;
+    bool success = m_finger->clear_database(status);
+    publish(status);
+    return success;
 }
 
 bool MQTTFinger::enroll_finger()
@@ -89,11 +76,23 @@ void MQTTFinger::handle_opcode()
 
     if (strcmp(m_opcode, "READ") == 0)
     {
+        // try to read a fingerprint
         success = read_fingerprint();
     }
     else if (strcmp(m_opcode, "ENROLL") == 0)
     {
+        // enroll a new finger
         success = enroll_finger();
+    }
+    else if (strcmp(m_opcode, "RESET") == 0)
+    {
+        // reset the ESP
+        ESP.reset();
+    }
+    else if (strcmp(m_opcode, "CLEAR") == 0)
+    {
+        // clear the fingerprint database
+        success = clear();
     }
     else
     {
@@ -111,6 +110,21 @@ void MQTTFinger::loop()
     handle_opcode();
 }
 
+void MQTTFinger::publish(const char *msg)
+{
+    if (!m_mqtt)
+        return;
+
+    m_mqtt->publish("fingerprint_out", msg);
+}
+
+void MQTTFinger::publish(uint16_t status)
+{
+    if (!m_finger)
+        return;
+    publish(m_finger->status_to_string(status));
+}
+
 bool MQTTFinger::read_fingerprint()
 {
     int16_t status;
@@ -122,4 +136,10 @@ bool MQTTFinger::read_fingerprint()
 
     publish("ID = " + std::to_string(fid) + " | score = " + std::to_string(score));
     return true;
+}
+
+void MQTTFinger::set_opcode(const char *code)
+{
+    strncpy(m_opcode, code, OPCODE_MAX_LENGTH);
+    m_codeAvailable = true;
 }

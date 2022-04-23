@@ -20,61 +20,10 @@ bool Finger::begin()
     return status;
 }
 
-void Finger::print_params()
+bool Finger::clear_database()
 {
-    Serial.print("Capacity: ");
-    Serial.println(m_params.capacity);
-    Serial.print("Packet length: ");
-    Serial.println(FPM::packet_lengths[m_params.packet_len]);
-}
-
-bool Finger::read_image(uint8_t cycles)
-{
-    uint16_t status;
-    for (uint8_t i = 0; i < cycles; ++i)
-    {
-        status = m_fpm.getImage();
-        if (status == FPM_OK)
-        {
-            return true;
-        }
-        // yield();
-    }
-    Serial.println("Failed to get image");
-    return false;
-}
-
-bool Finger::read_template(int16_t &status)
-{
-    if (!read_image())
-    {
-        return false;
-    }
-    status = m_fpm.image2Tz(1);
-    return status == FPM_OK;
-}
-
-bool Finger::verify_template(int16_t &status)
-{
-    if (!read_image())
-    {
-        return false;
-    }
-    status = m_fpm.image2Tz(2);
-    return status == FPM_OK;
-}
-
-bool Finger::store_model(int16_t fid, int16_t &status)
-{
-    status = m_fpm.createModel();
-    if (!evaluate_status(status))
-        return false;
-
-    status = m_fpm.storeModel(fid);
-    if (!evaluate_status(status))
-        return false;
-
-    return true;
+    int16_t status = m_fpm.emptyDatabase();
+    return evaluate_status(status);
 }
 
 bool Finger::enroll_finger(int16_t fid)
@@ -110,41 +59,6 @@ bool Finger::enroll_finger(int16_t fid)
 
     Serial.println("Enroll finished successfully");
     return true;
-}
-
-bool Finger::get_free_id(int16_t &result)
-{
-    int16_t status;
-    for (int page = 0; page < (m_params.capacity / FPM_TEMPLATES_PER_PAGE) + 1; page++)
-    {
-        status = m_fpm.getFreeIndex(page, &result);
-
-        if (!evaluate_status(status))
-        {
-            // read error
-            return false;
-        }
-
-        if (result != FPM_NOFREEINDEX)
-        {
-            // found a free slot
-            Serial.print("Free slot at ID ");
-            Serial.println(result);
-            return true;
-        }
-
-        // nothing found on this page, move on to next
-        // yield();
-    }
-
-    Serial.println("No free slots!");
-    return false;
-}
-
-bool Finger::clear_database()
-{
-    int16_t status = m_fpm.emptyDatabase();
-    return evaluate_status(status);
 }
 
 bool Finger::evaluate_status(int16_t status)
@@ -195,6 +109,85 @@ bool Finger::evaluate_status(int16_t status)
         break;
     }
     return false;
+}
+
+bool Finger::get_free_id(int16_t &result)
+{
+    int16_t status;
+    for (int page = 0; page < (m_params.capacity / FPM_TEMPLATES_PER_PAGE) + 1; page++)
+    {
+        status = m_fpm.getFreeIndex(page, &result);
+
+        if (!evaluate_status(status))
+        {
+            // read error
+            return false;
+        }
+
+        if (result != FPM_NOFREEINDEX)
+        {
+            // found a free slot
+            Serial.print("Free slot at ID ");
+            Serial.println(result);
+            return true;
+        }
+
+        // nothing found on this page, move on to next
+        // yield();
+    }
+
+    Serial.println("No free slots!");
+    return false;
+}
+
+void Finger::print_params()
+{
+    Serial.print("Capacity: ");
+    Serial.println(m_params.capacity);
+    Serial.print("Packet length: ");
+    Serial.println(FPM::packet_lengths[m_params.packet_len]);
+}
+
+bool Finger::read_fingerprint(int16_t &status, uint16_t &fid, uint16_t &score)
+{
+    status = FPM_NOFINGER;
+
+    if (!read_image(10))
+        return false;
+
+    status = m_fpm.image2Tz();
+    if (status != FPM_OK)
+        return false;
+
+    status = m_fpm.searchDatabase(&fid, &score);
+
+    return status == FPM_OK;
+}
+
+bool Finger::read_image(uint8_t cycles)
+{
+    uint16_t status;
+    for (uint8_t i = 0; i < cycles; ++i)
+    {
+        status = m_fpm.getImage();
+        if (status == FPM_OK)
+        {
+            return true;
+        }
+        // yield();
+    }
+    Serial.println("Failed to get image");
+    return false;
+}
+
+bool Finger::read_template(int16_t &status)
+{
+    if (!read_image())
+    {
+        return false;
+    }
+    status = m_fpm.image2Tz(1);
+    return status == FPM_OK;
 }
 
 std::string Finger::status_to_string(const int16_t &status)
@@ -258,18 +251,25 @@ std::string Finger::status_to_string(const int16_t &status)
     }
 }
 
-bool Finger::read_fingerprint(int16_t &status, uint16_t &fid, uint16_t &score)
+bool Finger::store_model(int16_t fid, int16_t &status)
 {
-    status = FPM_NOFINGER;
-
-    if (!read_image(10))
+    status = m_fpm.createModel();
+    if (!evaluate_status(status))
         return false;
 
-    status = m_fpm.image2Tz();
-    if (status != FPM_OK)
+    status = m_fpm.storeModel(fid);
+    if (!evaluate_status(status))
         return false;
 
-    status = m_fpm.searchDatabase(&fid, &score);
+    return true;
+}
 
+bool Finger::verify_template(int16_t &status)
+{
+    if (!read_image())
+    {
+        return false;
+    }
+    status = m_fpm.image2Tz(2);
     return status == FPM_OK;
 }

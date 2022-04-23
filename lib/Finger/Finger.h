@@ -12,11 +12,14 @@ public:
     // start up the serial communication with the server
     bool begin();
 
+    // clear the database
+    bool clear_database();
+
     // enroll a new finger at the specified fid
     bool enroll_finger(int16_t fid);
 
-    // clear the database
-    bool clear_database();
+    // evaluate the status code
+    bool evaluate_status(int16_t status);
 
     // get the next free id
     // returns true on success and updates the result argument
@@ -28,26 +31,23 @@ public:
     // print the fingerprint sensor's parameters
     void print_params();
 
+    // read a fingerprint and store the ID and score in the result
+    bool read_fingerprint(int16_t &status, uint16_t &fid, uint16_t &score);
+
     // read an image from the sensor
     bool read_image(uint8_t cycles = 255);
 
     // read an image and save it as template for verification
     bool read_template(int16_t &status);
 
-    // read an image and compare it against previously taken tempalte
-    bool verify_template(int16_t &status);
+    // convert the status to a string
+    std::string status_to_string(const int16_t &status);
 
     // store the verified template as a new model at given ID
     bool store_model(int16_t fid, int16_t &status);
 
-    // evaluate the status code
-    bool evaluate_status(int16_t status);
-
-    // convert the status to a string
-    std::string status_to_string(const int16_t &status);
-
-    // read a fingerprint and store the ID and score in the result
-    bool read_fingerprint(int16_t &status, uint16_t &fid, uint16_t &score);
+    // read an image and compare it against previously taken tempalte
+    bool verify_template(int16_t &status);
 
 private:
     SoftwareSerial m_serial;

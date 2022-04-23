@@ -31,6 +31,9 @@ protected:
     // read a fingerprint
     bool read_fingerprint();
 
+    // clear the fingerprint database
+    bool clear();
+
 private:
     void _mqtt_callback(char *topic, uint8_t *payload, unsigned int length);
 
