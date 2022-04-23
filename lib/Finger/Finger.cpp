@@ -257,6 +257,17 @@ std::string Finger::status_to_string(const int16_t &status)
     }
 }
 
+bool Finger::set_security_level(uint8_t level, int16_t &status)
+{
+    status = m_fpm.setParam(5, level);
+    if (!evaluate_status(status))
+        return false;
+
+    // read m_params back from the sensor
+    status = m_fpm.readParams(&m_params);
+    return status == FPM_OK;
+}
+
 bool Finger::store_model(int16_t fid, int16_t &status)
 {
     status = m_fpm.createModel();

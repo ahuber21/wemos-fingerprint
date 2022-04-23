@@ -43,6 +43,8 @@ public:
     // read an image and save it as template for verification
     bool read_template(int16_t &status);
 
+    bool set_security_level(uint8_t level, int16_t &status);
+
     // convert the status to a string
     std::string status_to_string(const int16_t &status);
 

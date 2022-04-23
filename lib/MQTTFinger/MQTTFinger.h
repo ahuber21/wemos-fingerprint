@@ -19,12 +19,21 @@ public:
     // the function to be called in the main loop
     void loop();
 
+    // print the system params to MQTT
+    void print_system_params();
+
 protected:
     // count the number of templates in the database
     bool count();
 
+    // get the number in the opcode
+    int16_t get_number_in_opcode();
+
     // enroll a new finger
     bool enroll_finger();
+
+    // set the security level
+    bool set_security_level(uint8_t level);
 
     // publish a message using the PubSubClient
     void publish(std::string msg) { publish(msg.c_str()); }
@@ -35,8 +44,6 @@ protected:
     bool read_fingerprint();
 
 private:
-    void _mqtt_callback(char *topic, uint8_t *payload, unsigned int length);
-
     Finger *m_finger;
     PubSubClient *m_mqtt;
 

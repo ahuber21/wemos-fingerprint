@@ -62,12 +62,12 @@ void setup()
   setup_serial();
   setup_wifi();
   setup_ota();
+  setup_mqtt();
   if (!setup_finger())
   {
     delay(2000);
     ESP.restart();
   }
-  setup_mqtt();
 
   ticker.detach();
   signal_setup_complete();
@@ -127,6 +127,7 @@ bool setup_finger()
   }
   Serial.println("Found fingerprint sensor!");
   finger.print_params();
+  mqtt_finger.print_system_params();
 
   // setup the finger detected interrupt
   pinMode(FINGER_INTERRUPT, INPUT);
@@ -173,7 +174,7 @@ void mqtt_connect()
     if (mqtt_client.connect(mqtt_clientid))
     {
       Serial.println("connected");
-      mqtt_client.publish(mqtt_out_topic, "ready");
+      mqtt_client.publish(mqtt_out_topic, "fingerprint sensor ready");
       // ... and resubscribe
       mqtt_client.subscribe(mqtt_in_topic);
     }

@@ -107,6 +107,16 @@ void MQTTFinger::handle_opcode()
     {
         success = count();
     }
+    else if (strcmp(m_opcode, "PARAMS") == 0)
+    {
+        // print the system parameters to MQTT
+        print_system_params();
+        success = true;
+    }
+    else if (strncmp(m_opcode, "SECURITY", 8) == 0)
+    {
+        success = set_security_level(get_number_in_opcode());
+    }
     else
     {
         publish("unknown code: " + std::string(m_opcode));
@@ -115,7 +125,20 @@ void MQTTFinger::handle_opcode()
     m_codeAvailable = false;
 
     digitalWrite(LED_BLUE, LOW);
-    blink_led(success ? LED_GREEN : LED_RED, 3, 100);
+    blink_led(success ? LED_GREEN : LED_RED, 3, 50);
+}
+
+int16_t MQTTFinger::get_number_in_opcode()
+{
+    const char *ptr = strchr(m_opcode, ' ');
+    if (ptr && *(ptr + 1))
+    {
+        return std::atoi(ptr + 1);
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 void MQTTFinger::loop()
@@ -155,4 +178,33 @@ void MQTTFinger::set_opcode(const char *code)
 {
     strncpy(m_opcode, code, OPCODE_MAX_LENGTH);
     m_codeAvailable = true;
+}
+
+bool MQTTFinger::set_security_level(uint8_t level)
+{
+    if (level < 1 || level > 5)
+    {
+        publish("Security level must be between 1 and 5");
+        return false;
+    }
+    int16_t status;
+    bool success = m_finger->set_security_level(level, status);
+    if (success)
+        publish("Security level set to " + std::to_string(level));
+    else
+        publish(status);
+    return success;
+}
+
+void MQTTFinger::print_system_params()
+{
+    FPM_System_Params params = m_finger->get_params();
+    publish("Fingerprint parameters");
+    publish("status_reg   " + std::to_string(params.status_reg));
+    publish("system_id    " + std::to_string(params.system_id));
+    publish("capacity     " + std::to_string(params.capacity));
+    publish("security lvl " + std::to_string(params.security_level));
+    publish("device_addr  " + std::to_string(params.device_addr));
+    publish("packet len   " + std::to_string(params.packet_len));
+    publish("baud rate    " + std::to_string(params.baud_rate));
 }
