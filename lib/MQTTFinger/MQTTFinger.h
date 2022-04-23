@@ -29,6 +29,9 @@ protected:
     // get the number in the opcode
     int16_t get_number_in_opcode();
 
+    // delete the requested finger
+    bool delete_finger(int16_t fid);
+
     // enroll a new finger
     bool enroll_finger();
 

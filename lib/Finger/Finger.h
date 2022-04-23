@@ -15,6 +15,9 @@ public:
     // clear the database
     bool clear_database();
 
+    // delete an existing finger
+    bool delete_finger(int16_t fid, int16_t &status);
+
     // enroll a new finger at the specified fid
     bool enroll_finger(int16_t fid);
 

@@ -26,6 +26,12 @@ bool Finger::clear_database()
     return evaluate_status(status);
 }
 
+bool Finger::delete_finger(int16_t fid, int16_t &status)
+{
+    status = m_fpm.deleteModel(fid);
+    return status == FPM_OK;
+}
+
 bool Finger::enroll_finger(int16_t fid)
 {
     int16_t status;

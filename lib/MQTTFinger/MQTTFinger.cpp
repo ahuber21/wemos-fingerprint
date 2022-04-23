@@ -24,6 +24,19 @@ bool MQTTFinger::count()
     return success;
 }
 
+bool MQTTFinger::delete_finger(int16_t fid)
+{
+    int16_t status;
+
+    bool success = m_finger->delete_finger(fid, status);
+    if (!success)
+        publish(status);
+    else
+        publish("Deleted finger with ID = " + std::to_string(fid));
+
+    return success;
+}
+
 bool MQTTFinger::enroll_finger()
 {
     bool success;
@@ -97,6 +110,11 @@ void MQTTFinger::handle_opcode()
     {
         // reset the ESP
         ESP.reset();
+    }
+    else if (strncmp(m_opcode, "DELETE", 6) == 0)
+    {
+        // delete the requested fingerprint from the index
+        success = delete_finger(get_number_in_opcode());
     }
     else if (strcmp(m_opcode, "CLEAR") == 0)
     {
