@@ -39,9 +39,9 @@ protected:
     bool set_security_level(uint8_t level);
 
     // publish a message using the PubSubClient
-    void publish(std::string msg) { publish(msg.c_str()); }
-    void publish(uint16_t status);
-    void publish(const char *msg);
+    void publish(std::string msg, const char *topic = "fingerprint_out") { publish(msg.c_str(), topic); }
+    void publish(uint16_t status, const char *topic = "fingerprint_out");
+    void publish(const char *msg, const char *topic = "fingerprint_out");
 
     // read a fingerprint
     bool read_fingerprint();

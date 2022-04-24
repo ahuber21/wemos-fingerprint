@@ -15,7 +15,7 @@
 static const char *ssid = "200";
 static const char *pass = "1Gabelbombe";
 
-static const char *mqtt_server = "192.168.0.26";
+static const char *mqtt_server = "192.168.0.162";
 static const char *mqtt_clientid = "fingerprint";
 static const char *mqtt_out_topic = "fingerprint_out";
 static const char *mqtt_in_topic = "fingerprint_in";

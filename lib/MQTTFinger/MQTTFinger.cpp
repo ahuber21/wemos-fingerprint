@@ -42,7 +42,7 @@ bool MQTTFinger::enroll_finger()
     bool success;
     int16_t status, fid;
 
-    publish("starting to enroll a new finger");
+    publish("starting to enroll a new finger", "fingerprint_debug");
     success = m_finger->get_free_id(fid);
     if (!success)
     {
@@ -50,7 +50,7 @@ bool MQTTFinger::enroll_finger()
         return false;
     }
 
-    publish("place finger to start enrolling at ID = " + std::to_string(fid));
+    publish("place finger to start enrolling at ID = " + std::to_string(fid), "fingerprint_debug");
     delay(1000);
     success = m_finger->read_template(status);
     if (!success)
@@ -59,25 +59,25 @@ bool MQTTFinger::enroll_finger()
         return false;
     }
 
-    publish("remove finger");
+    publish("remove finger", "fingerprint_debug");
     digitalWrite(LED_BLUE, LOW);
     blink_led(LED_BLUE, 3, 100);
     delay(1000);
-    publish("place same finger again");
+    publish("place same finger again", "fingerprint_debug");
     digitalWrite(LED_BLUE, HIGH);
     delay(200);
     success = m_finger->verify_template(status);
     if (!success)
     {
-        publish(status);
+        publish(status, "fingerprint_debug");
         return false;
     }
 
-    publish("validating template");
+    publish("validating template", "fingerprint_debug");
     success = m_finger->store_model(fid, status);
     if (!success)
     {
-        publish(status);
+        publish(status, "fingerprint_debug");
         return false;
     }
     publish("Enrolled new finger at ID = " + std::to_string(fid));
@@ -137,7 +137,7 @@ void MQTTFinger::handle_opcode()
     }
     else
     {
-        publish("unknown code: " + std::string(m_opcode));
+        publish("unknown code: " + std::string(m_opcode), "fingerprint_debug");
     }
 
     m_codeAvailable = false;
@@ -164,19 +164,19 @@ void MQTTFinger::loop()
     handle_opcode();
 }
 
-void MQTTFinger::publish(const char *msg)
+void MQTTFinger::publish(const char *msg, const char *topic)
 {
     if (!m_mqtt)
         return;
 
-    m_mqtt->publish("fingerprint_out", msg);
+    m_mqtt->publish(topic, msg);
 }
 
-void MQTTFinger::publish(uint16_t status)
+void MQTTFinger::publish(uint16_t status, const char *topic)
 {
     if (!m_finger)
         return;
-    publish(m_finger->status_to_string(status));
+    publish(m_finger->status_to_string(status), topic);
 }
 
 bool MQTTFinger::read_fingerprint()
@@ -186,7 +186,7 @@ bool MQTTFinger::read_fingerprint()
     bool success = m_finger->read_fingerprint(status, fid, score);
     if (!success)
     {
-        publish(status);
+        publish(status, "fingerprint_debug");
         return false;
     }
 
@@ -204,7 +204,7 @@ bool MQTTFinger::set_security_level(uint8_t level)
 {
     if (level < 1 || level > 5)
     {
-        publish("Security level must be between 1 and 5");
+        publish("Security level must be between 1 and 5", "fingerprint_debug");
         return false;
     }
     int16_t status;
@@ -219,12 +219,12 @@ bool MQTTFinger::set_security_level(uint8_t level)
 void MQTTFinger::print_system_params()
 {
     FPM_System_Params params = m_finger->get_params();
-    publish("Fingerprint parameters");
-    publish("status_reg   " + std::to_string(params.status_reg));
-    publish("system_id    " + std::to_string(params.system_id));
-    publish("capacity     " + std::to_string(params.capacity));
-    publish("security lvl " + std::to_string(params.security_level));
-    publish("device_addr  " + std::to_string(params.device_addr));
-    publish("packet len   " + std::to_string(params.packet_len));
-    publish("baud rate    " + std::to_string(params.baud_rate));
+    publish("Fingerprint parameters", "fingerprint_debug");
+    publish("status_reg   " + std::to_string(params.status_reg), "fingerprint_debug");
+    publish("system_id    " + std::to_string(params.system_id), "fingerprint_debug");
+    publish("capacity     " + std::to_string(params.capacity), "fingerprint_debug");
+    publish("security lvl " + std::to_string(params.security_level), "fingerprint_debug");
+    publish("device_addr  " + std::to_string(params.device_addr), "fingerprint_debug");
+    publish("packet len   " + std::to_string(params.packet_len), "fingerprint_debug");
+    publish("baud rate    " + std::to_string(params.baud_rate), "fingerprint_debug");
 }
